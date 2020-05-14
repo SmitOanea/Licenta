@@ -7,7 +7,7 @@ class Parameters:
         self.dir_pos_examples = os.path.join(self.base_dir, 'exemplePozitive')
         self.dir_neg_examples = os.path.join(self.base_dir, 'exempleNegative')
         # 'exempleTest/CursVA' 'exempleTest/CMU+MIT'
-        self.dir_test_examples = os.path.join(self.base_dir, 'exempleTest/CMU+MIT')
+        self.dir_test_examples = os.path.join(self.base_dir, 'exempleTest')
         # self.dir_test_examples = os.path.join(self.base_dir, 'exempleTest/CursVA')
         self.path_annotations = os.path.join(self.base_dir, 'exempleTest/CMU+MIT_adnotari/ground_truth_bboxes.txt')
         self.dir_save_files = os.path.join(self.base_dir, 'salveazaFisiere')

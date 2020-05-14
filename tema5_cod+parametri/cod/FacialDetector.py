@@ -32,12 +32,31 @@ class FacialDetector:
 
         images_path = os.path.join(self.params.dir_pos_examples, '*.jpeg')
         files = glob.glob(images_path)
+        print("len files = ", len(files))
+        print("len files[0] = ", len(files[0]))
+        print("len files[0][0] = ", len(files[0][0]))
+        print("\n")
+        print("files[0] = ", files[0])
+        print("files[1] = ", files[1])
+        print("files[2] = ", files[2])
         num_images = len(files)
         positive_descriptors = []
         print('Calculam descriptorii pt %d imagini pozitive...' % num_images)
         for i in range(num_images):
             print('Procesam exemplul pozitiv numarul %d...' % i)
             img = cv.imread(files[i], cv.IMREAD_GRAYSCALE)
+
+
+            #acum o voi redimensiona, pentru ca initial imaginile facute de mine cu telefonul sunt mari
+            img = cv.resize(img, (self.params.dim_window, self.params.dim_window))
+            '''Acest cod comentat il folosesc doar daca vreau sa afisez fiecare exemplu pozitiv de antrenare:
+            from PIL import Image
+            image = Image.open(files[i]).convert("L")
+            arr = np.asarray(image)
+            plt.imshow(arr, cmap='gray', vmin=0, vmax=255)
+            plt.show()'''
+
+
             hog_img = self.hog(img, feature_vector=True)
             positive_descriptors.append(hog_img)
             if self.params.use_flip_images:
@@ -129,6 +148,8 @@ class FacialDetector:
         for c in Cs:
             print('Antrenam un clasificator pentru c=%f' % c)
             model = LinearSVC(C=c)
+            print("len training_examples = ", len(training_examples))
+            print("len train_labels = ", len(train_labels))
             model.fit(training_examples, train_labels)
             acc = model.score(training_examples, train_labels)
             if acc > best_accuracy:

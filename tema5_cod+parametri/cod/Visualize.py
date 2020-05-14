@@ -17,13 +17,14 @@ def show_detections_without_ground_truth(detections, scores, file_names, params:
     (doar numele, nu toata calea).
     """
     print('No annotations')
-    test_images_path = os.path.join(params.dir_test_examples, '*.jpg')
+    test_images_path = os.path.join(params.dir_test_examples, '*.jpeg')
     test_files = glob.glob(test_images_path)
 
     for test_file in test_files:
         image = cv.imread(test_file)
         short_file_name = ntpath.basename(test_file)
         indices_detections_current_image = np.where(file_names == short_file_name)
+        print("indices = ", indices_detections_current_image)
         current_detections = detections[indices_detections_current_image]
         current_scores = scores[indices_detections_current_image]
 
