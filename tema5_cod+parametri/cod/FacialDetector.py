@@ -32,13 +32,6 @@ class FacialDetector:
 
         images_path = os.path.join(self.params.dir_pos_examples, '*.jpeg')
         files = glob.glob(images_path)
-        print("len files = ", len(files))
-        print("len files[0] = ", len(files[0]))
-        print("len files[0][0] = ", len(files[0][0]))
-        print("\n")
-        print("files[0] = ", files[0])
-        print("files[1] = ", files[1])
-        print("files[2] = ", files[2])
         num_images = len(files)
         positive_descriptors = []
         print('Calculam descriptorii pt %d imagini pozitive...' % num_images)
@@ -46,8 +39,7 @@ class FacialDetector:
             print('Procesam exemplul pozitiv numarul %d...' % i)
             img = cv.imread(files[i], cv.IMREAD_GRAYSCALE)
 
-
-            #acum o voi redimensiona, pentru ca initial imaginile facute de mine cu telefonul sunt mari
+            # acum o voi redimensiona, pentru ca initial imaginile facute de mine cu telefonul sunt mari
             img = cv.resize(img, (self.params.dim_window, self.params.dim_window))
             '''Acest cod comentat il folosesc doar daca vreau sa afisez fiecare exemplu pozitiv de antrenare:
             from PIL import Image
@@ -55,7 +47,6 @@ class FacialDetector:
             arr = np.asarray(image)
             plt.imshow(arr, cmap='gray', vmin=0, vmax=255)
             plt.show()'''
-
 
             hog_img = self.hog(img, feature_vector=True)
             positive_descriptors.append(hog_img)
@@ -78,8 +69,9 @@ class FacialDetector:
 
         images_path = os.path.join(self.params.dir_neg_examples, '*.jpeg')
         files = glob.glob(images_path)
+        print("images path = ", images_path)
         num_images = len(files)
-        print("num_images = ", num_images)
+        print("len files = ", len(files))
         num_negative_per_image = self.params.number_negative_examples // num_images
         negative_descriptors = []
         print('Calculam descriptorii pt %d imagini negative' % num_images)
@@ -148,8 +140,6 @@ class FacialDetector:
         for c in Cs:
             print('Antrenam un clasificator pentru c=%f' % c)
             model = LinearSVC(C=c)
-            print("len training_examples = ", len(training_examples))
-            print("len train_labels = ", len(train_labels))
             model.fit(training_examples, train_labels)
             acc = model.score(training_examples, train_labels)
             if acc > best_accuracy:
@@ -256,7 +246,7 @@ class FacialDetector:
         (doar numele, nu toata calea).
         """
 
-        test_images_path = os.path.join(self.params.dir_test_examples, '*.jpg')
+        test_images_path = os.path.join(self.params.dir_test_examples, '*.jpeg')
         test_files = glob.glob(test_images_path)
         detections = np.zeros((0, 4), np.int32)  # array cu toate detectiile pe care le obtinem
         scores = np.array([])  # array cu toate scorurile pe care le optinem
@@ -272,13 +262,26 @@ class FacialDetector:
             print('Procesam imaginea de testare %d/%d, %s..' % (i, num_test_images, test_files[i]))
             img = cv.imread(test_files[i], cv.IMREAD_GRAYSCALE)
 
+            '''o redimensionez in caz ca e prea mare, ca sa nu dureze mult testarea'''
+            if img.shape[0] > 190:
+                raport = img.shape[0] / 190.0
+                new_height = int(img.shape[0] / raport)
+                new_width = int(img.shape[1] / raport)
+                print("\n\nredimensionez imaginea de test pentru ca e foarte mare. Noile dimensiuni sunt: ")
+                print("new_hight = ", new_height)
+                print("new_width = ", new_width)
+                print("vechile dimensiuni erau ", img.shape, "\n\n")
+                img = cv.resize(img, (new_width, new_height))
+
+
             image_resizing_multiplier = self.params.scaling_ratio
 
             resize_multiplier = 1
             current_detections = []
             current_scores = []
             h, w = img.shape[0], img.shape[1]
-            while True:
+            am_gasit_detectie = False
+            while am_gasit_detectie==False:
                 h = math.floor(img.shape[0] * resize_multiplier)
                 w = math.floor(img.shape[1] * resize_multiplier)
                 if h < 30 or w < 30:
@@ -301,6 +304,10 @@ class FacialDetector:
                             real_iwp = math.floor((iw + win_w) * hog_cell / resize_multiplier)
                             current_detections.append([real_iw, real_ih, real_iwp, real_ihp])
                             current_scores.append(score)
+                            am_gasit_detectie = True
+                            break#experimental. De scos daca merge prost
+                    if am_gasit_detectie:
+                        break
 
                 resize_multiplier *= image_resizing_multiplier
 

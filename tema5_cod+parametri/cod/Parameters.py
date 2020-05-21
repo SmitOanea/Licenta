@@ -8,7 +8,6 @@ class Parameters:
         self.dir_neg_examples = os.path.join(self.base_dir, 'exempleNegative')
         # 'exempleTest/CursVA' 'exempleTest/CMU+MIT'
         self.dir_test_examples = os.path.join(self.base_dir, 'exempleTest')
-        # self.dir_test_examples = os.path.join(self.base_dir, 'exempleTest/CursVA')
         self.path_annotations = os.path.join(self.base_dir, 'exempleTest/CMU+MIT_adnotari/ground_truth_bboxes.txt')
         self.dir_save_files = os.path.join(self.base_dir, 'salveazaFisiere')
         if not os.path.exists(self.dir_save_files):
@@ -25,7 +24,7 @@ class Parameters:
         self.number_positive_examples = 6713  # numarul exemplelor pozitive
         self.number_negative_examples = 10000  # numarul exemplelor negative
         self.number_hard_negatives = 1000
-        self.threshold = 0  # toate ferestrele cu scorul > threshold si maxime locale devin detectii
+        self.threshold = -10  # toate ferestrele cu scorul > threshold si maxime locale devin detectii
         self.has_annotations = False
 
         self.scaling_ratio = 0.9

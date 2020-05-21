@@ -7,16 +7,16 @@ import numpy as np
 
 
 params: Parameters = Parameters()
-params.dim_window = 36  # exemplele pozitive (fete de oameni cropate) au 36x36 pixeli
+params.dim_window = 36  # exemplele pozitive (poze patrate cu fetele cubului)  au 36x36 pixeli
 params.dim_hog_cell = 4   # dimensiunea celulei
 params.overlap = 0.3
-params.number_positive_examples = 24#6713 * 2   # numarul exemplelor pozitive
-params.number_negative_examples = 30#10000  # numarul exemplelor negative
-params.threshold = -30000  # toate ferestrele cu scorul > threshold si maxime locale devin detectii
+params.number_positive_examples = 70 * 2#6713 * 2   # numarul exemplelor pozitive
+params.number_negative_examples = 10000  # numarul exemplelor negative
+params.threshold = 1.1  # toate ferestrele cu scorul > threshold si maxime locale devin detectii
 params.has_annotations = False
 
 params.scaling_ratio = 0.9
-params.use_hard_mining = False#True  # (optional)antrenare cu exemple puternic negative
+params.use_hard_mining = False  # (optional)antrenare cu exemple puternic negative
 params.use_flip_images = True  # adauga imaginile cu fete oglindite
 
 
@@ -48,8 +48,14 @@ else:
     print('Am salvat descriptorii pentru exemplele negative in fisierul %s' % negative_features_path)
 
 # Pasul 2. Invatam clasificatorul liniar
+print("len positive features = ", len(positive_features))
+print("len negative features = ", len(negative_features), "\n\n")
 training_examples = np.concatenate((np.squeeze(positive_features), np.squeeze(negative_features)), axis=0)
 train_labels = np.concatenate((np.ones(positive_features.shape[0]), np.zeros(negative_features.shape[0])))
+
+print("len labels = ", len(train_labels))
+print("len samples = ", len(training_examples))
+
 facial_detector.train_classifier(training_examples, train_labels)
 
 
@@ -110,8 +116,4 @@ if params.has_annotations:
     facial_detector.eval_detections(detections, scores, file_names)
     show_detections_with_ground_truth(detections, scores, file_names, params)
 else:
-    print("sadfasdfsadf")
-    print("sadfasdfsadf")
-    print("sadfasdfsadf")
-    print("sadfasdfsadf")
     show_detections_without_ground_truth(detections, scores, file_names, params)

@@ -22,9 +22,18 @@ def show_detections_without_ground_truth(detections, scores, file_names, params:
 
     for test_file in test_files:
         image = cv.imread(test_file)
+        '''fac iar smecheria cu redimensionatul '''
+        if image.shape[0] > 190:
+            raport = image.shape[0] / 190.0
+            new_height = int(image.shape[0] / raport)
+            new_width = int(image.shape[1] / raport)
+            image = cv.resize(image, (new_width, new_height))
+
+
         short_file_name = ntpath.basename(test_file)
+        print("file names = ", file_names)
+        print("short file name = ", short_file_name)
         indices_detections_current_image = np.where(file_names == short_file_name)
-        print("indices = ", indices_detections_current_image)
         current_detections = detections[indices_detections_current_image]
         current_scores = scores[indices_detections_current_image]
 
