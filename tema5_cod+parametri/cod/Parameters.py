@@ -4,11 +4,9 @@ import os
 class Parameters:
     def __init__(self):
         self.base_dir = '../data'
-        self.dir_pos_examples = os.path.join(self.base_dir, 'exemplePozitive')
+        self.dir_pos_examples = os.path.join(self.base_dir, 'exemplePozitiveCuMargini')
         self.dir_neg_examples = os.path.join(self.base_dir, 'exempleNegative')
-        # 'exempleTest/CursVA' 'exempleTest/CMU+MIT'
         self.dir_test_examples = os.path.join(self.base_dir, 'exempleTest')
-        self.path_annotations = os.path.join(self.base_dir, 'exempleTest/CMU+MIT_adnotari/ground_truth_bboxes.txt')
         self.dir_save_files = os.path.join(self.base_dir, 'salveazaFisiere')
         if not os.path.exists(self.dir_save_files):
             os.makedirs(self.dir_save_files)
@@ -30,3 +28,9 @@ class Parameters:
         self.scaling_ratio = 0.9
         self.use_hard_mining = False  # (optional)antrenare cu exemple puternic negative
         self.use_flip_images = False  # adauga imaginile cu fete oglindite
+
+        '''Parametri adaugati mai tarziu:'''
+        self.select_ROI = True
+        self.dir_ROI_images = os.path.join(self.base_dir, 'decupariROI')
+        self.dir_extracted_detections = '../../Extract Colors/data/exempleReale'
+        self.width_redimensionare = 200

@@ -41,12 +41,6 @@ class FacialDetector:
 
             # acum o voi redimensiona, pentru ca initial imaginile facute de mine cu telefonul sunt mari
             img = cv.resize(img, (self.params.dim_window, self.params.dim_window))
-            '''Acest cod comentat il folosesc doar daca vreau sa afisez fiecare exemplu pozitiv de antrenare:
-            from PIL import Image
-            image = Image.open(files[i]).convert("L")
-            arr = np.asarray(image)
-            plt.imshow(arr, cmap='gray', vmin=0, vmax=255)
-            plt.show()'''
 
             hog_img = self.hog(img, feature_vector=True)
             positive_descriptors.append(hog_img)
@@ -92,7 +86,7 @@ class FacialDetector:
         return negative_descriptors
 
     def get_hard_negatives(self):
-        images_path = os.path.join(self.params.dir_neg_examples, '*.jpg')
+        images_path = os.path.join(self.params.dir_neg_examples, '*.jpeg')
         files = glob.glob(images_path)
 
         number_of_hard_examples = self.params.number_hard_negatives
@@ -104,12 +98,24 @@ class FacialDetector:
             images_by_path[file] = cv.imread(file, cv.IMREAD_GRAYSCALE)
             return images_by_path[file]
         hard_negatives = []
-        while len(hard_negatives) < number_of_hard_examples:
+        var = 0
+        while len(hard_negatives) < 4:#number_of_hard_examples:
+            if var%1000==0:
+                print("var = ", var)
+                print("len(hard_negatives) = ", len(hard_negatives))
+            var+=1
             i = np.random.randint(low=0, high=len(files))
             img = get_img(files[i])
-            x = np.random.randint(low=0, high=img.shape[0] - self.params.dim_window + 1)
-            y = np.random.randint(low=0, high=img.shape[1] - self.params.dim_window + 1)
-            curr_img = img[x: x + self.params.dim_window, y: y + self.params.dim_window]
+
+
+            latime_patrat = np.random.randint(low=self.params.dim_window, high=min(3*self.params.dim_window+1, min(img.shape[0], img.shape[1] )) + 1)
+
+            x = np.random.randint(low=0, high=img.shape[0] - latime_patrat + 1)
+            y = np.random.randint(low=0, high=img.shape[1] - latime_patrat + 1)
+            curr_img = img[x: x + latime_patrat, y: y + latime_patrat]
+
+            curr_img = cv.resize(curr_img, (36, 36))
+
             curr_hog = self.hog(curr_img, feature_vector=True)
             score = self.best_model.decision_function([curr_hog])[0]
             if score > 0:
@@ -237,7 +243,7 @@ class FacialDetector:
         date MIT+CMU dar si pentru alte imagini (imaginile realizate cu voi la curs+laborator).
         Functia 'non_maximal_suppression' suprimeaza detectii care se suprapun (protocolul de evaluare considera
         o detectie duplicata ca fiind falsa)
-        Suprimarea non-maximelor se realizeaza pe pentru fiecare imagine.
+        Suprimarea non-maximelor se realizeaza pentru fiecare imagine.
         :return:
         detections: numpy array de dimensiune NX4, unde N este numarul de detectii pentru toate imaginile.
         detections[i, :] = [x_min, y_min, x_max, y_max]
@@ -263,15 +269,41 @@ class FacialDetector:
             img = cv.imread(test_files[i], cv.IMREAD_GRAYSCALE)
 
             '''o redimensionez in caz ca e prea mare, ca sa nu dureze mult testarea'''
-            if img.shape[0] > 190:
-                raport = img.shape[0] / 190.0
+            '''if im[0]>420:
+                raport = img.shape[0] / 420.0
                 new_height = int(img.shape[0] / raport)
                 new_width = int(img.shape[1] / raport)
-                print("\n\nredimensionez imaginea de test pentru ca e foarte mare. Noile dimensiuni sunt: ")
+                print("\n\nredimensionez imaginea de test ASTFEL INCAT SA O PASTREZ")
                 print("new_hight = ", new_height)
                 print("new_width = ", new_width)
-                print("vechile dimensiuni erau ", img.shape, "\n\n")
-                img = cv.resize(img, (new_width, new_height))
+
+                img_de_pastrat = cv.resize(img, (new_width, new_height))
+                print("test_files[i] = ", test_files[i])
+                cv.imwrite("micsorata_" + test_files[i] + ".jpeg", img_de_pastrat)'''
+            if img.shape[0] < img.shape[1]:
+                if img.shape[0] > self.params.width_redimensionare:
+
+                    raport = img.shape[0] / (1.0*self.params.width_redimensionare)
+                    new_height = int(img.shape[0] / raport)
+                    new_width = int(img.shape[1] / raport)
+                    print("\n\nredimensionez imaginea de test pentru ca e foarte mare. Noile dimensiuni sunt: ")
+                    print("new_hight = ", new_height)
+                    print("new_width = ", new_width)
+                    print("vechile dimensiuni erau ", img.shape, "\n\n")
+
+                    img = cv.resize(img, (new_width, new_height))
+            else:
+                print("intru pe ELSE")
+                if img.shape[1] > self.params.width_redimensionare:
+                    raport = img.shape[1] / (1.0 * self.params.width_redimensionare)
+                    new_height = int(img.shape[0] / raport)
+                    new_width = int(img.shape[1] / raport)
+                    print("\n\nredimensionez imaginea de test pentru ca e foarte mare. Noile dimensiuni sunt: ")
+                    print("new_hight = ", new_height)
+                    print("new_width = ", new_width)
+                    print("vechile dimensiuni erau ", img.shape, "\n\n")
+
+                    img = cv.resize(img, (new_width, new_height))
 
 
             image_resizing_multiplier = self.params.scaling_ratio
@@ -280,8 +312,10 @@ class FacialDetector:
             current_detections = []
             current_scores = []
             h, w = img.shape[0], img.shape[1]
-            am_gasit_detectie = False
-            while am_gasit_detectie==False:
+            nr_detectii_gasite = 0
+            pas = 0
+            while nr_detectii_gasite<3:
+                pas+=1
                 h = math.floor(img.shape[0] * resize_multiplier)
                 w = math.floor(img.shape[1] * resize_multiplier)
                 if h < 30 or w < 30:
@@ -292,22 +326,36 @@ class FacialDetector:
                 nh, nw = img_hog.shape[0], img_hog.shape[1]
                 win_h = self.params.dim_window // hog_cell - 1
                 win_w = win_h
+                limita_stanga = -1
+                limita_sus = -1
+                pas_i = 0
                 for ih in range(0, nh - win_h + 1):
+                    if limita_sus != -1:
+                        ih = limita_sus
+                        ih+=pas_i
+                        pas_i+=1
+
                     for iw in range(0, nw - win_w + 1):
+                        if limita_sus != -1:
+                            ih = limita_stanga
+                            ih += pas_i
+                            pas_i += 1
+
                         window = img_hog[ih: ih + win_h, iw: iw + win_w, :]
                         window = np.ravel(window)
+
                         score = self.best_model.decision_function([window])[0]
-                        if score > self.params.threshold:
+                        if score > self.params.threshold:#am gasit o detectie
                             real_ih = math.floor(ih * hog_cell / resize_multiplier)
                             real_iw = math.floor(iw * hog_cell / resize_multiplier)
                             real_ihp = math.floor((ih + win_h) * hog_cell / resize_multiplier)
                             real_iwp = math.floor((iw + win_w) * hog_cell / resize_multiplier)
                             current_detections.append([real_iw, real_ih, real_iwp, real_ihp])
                             current_scores.append(score)
-                            am_gasit_detectie = True
-                            break#experimental. De scos daca merge prost
-                    if am_gasit_detectie:
-                        break
+                            nr_detectii_gasite+=1
+                            #break#experimental. De scos daca merge prost
+                            if nr_detectii_gasite>2:
+                                break
 
                 resize_multiplier *= image_resizing_multiplier
 
@@ -325,6 +373,7 @@ class FacialDetector:
             print('Timpul de procesarea al imaginii de testare %d/%d este %f sec.'
                   % (i, num_test_images, end_time - start_time))
 
+        print("\n\n")
         return detections, scores, np.array(file_names)
 
     def compute_average_precision(self, rec, prec):
