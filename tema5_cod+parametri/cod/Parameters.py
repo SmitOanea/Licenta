@@ -34,3 +34,5 @@ class Parameters:
         self.dir_ROI_images = os.path.join(self.base_dir, 'decupariROI')
         self.dir_extracted_detections = '../../Extract Colors/data/exempleReale'
         self.width_redimensionare = 200
+        self.real_time_frames = False
+        self.raport_redim = 1

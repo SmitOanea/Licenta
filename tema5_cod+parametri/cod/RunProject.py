@@ -8,9 +8,6 @@ def foo(bar):
     print('hello {}'.format(bar))
     return 'foo'
 
-
-# import pynput.keyboard
-
 def FunctieDeTestPentruImagini(frame, parametri_returnati):
     #time.sleep(0.6)
     sum=0
@@ -38,79 +35,6 @@ def FunctieDeTestPentruImagini(frame, parametri_returnati):
     #return_value = future.result()
     #print(return_value)
 
-video = cv.VideoCapture(0)  # poate pun si 1 dupa ce conectez mobilul
-a = 0
-start_point, end_point, color, thickness = 0,0,0,0
-lista = [0,0,0,0]
-lista[0] =  start_point
-lista[1] = end_point
-lista[2] = color
-lista[3] = thickness
-tmort = True
-prima_data = True
-while True:
-    a = a + 1
-    # 3
-    check, frame = video.read()
-
-
-    # 6. grayscale
-    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-
-    # 4
-    #start_point = (100, 300)
-    #end_point = (150, 350)
-    #color = (0, 0, 255)
-    #thickness = 2
-
-    # Using cv2.rectangle() method
-    # Draw a rectangle with blue line borders of thickness of 2 px
-    #if int(a / 100) % 2 == 0:
-    #    frame = cv.rectangle(frame, start_point, end_point, color, thickness)
-
-    #t = threading.Thread(target=FunctieDeTestPentruImagini(frame))
-    #t.daemon = True  # set thread to daemon ('ok' won't be printed in this case)
-    #t.start()
-    '''t = executor.submit(FunctieDeTestPentruImagini, frame)'''
-    if tmort == True:
-        t1 = threading.Thread(target=FunctieDeTestPentruImagini, args=(frame, lista))
-        #t = executor.submit(FunctieDeTestPentruImagini, frame)
-        t1.start()
-        #print("piscina = ", t._work_queue.qsize())
-        tmort = False
-        #print("t1.isAlive()", t1.isAlive())
-    if prima_data == False and t1.isAlive()==False:
-        start_point = lista[0]
-        end_point = lista[1]
-        color = lista[2]
-        thickness = lista[3]
-        print("dupa apel: ", start_point, end_point, color, thickness)
-        tmort = True
-        #print("t = ", t.join())
-
-
-    #FunctieDeTestPentruImagini(frame)
-
-    if start_point!=0:
-        frame = cv.rectangle(frame, start_point, end_point, color, thickness)
-
-    cv.imshow("Captura", frame)
-
-    # 5
-
-
-    # 7. For playing
-    key = cv.waitKey(1)
-    if key == ord('q'):
-        r = 8/0
-        break
-    prima_data = False
-
-print("a = ", a)
-# 2
-video.release()
-
-cv.destroyAllWindows
 
 
 
@@ -158,6 +82,7 @@ params.use_flip_images = True  # adauga imaginile cu fete oglindite
 '''start parametri adaugati mai tarziu'''
 params.width_redimensionare = 210.0
 params.select_ROI = False
+params.real_time_frames = True
 '''stop parametri adaugati mai tarziu'''
 
 facial_detector: FacialDetector = FacialDetector(params)
@@ -244,17 +169,108 @@ if params.use_hard_mining:
 
 
 
-# Pasul 4. Ruleaza detectorul facial pe imaginile de test.
-detections, scores, file_names = facial_detector.run()
-
-
-# Pasul 5. Evalueaza si vizualizeaza detectiile
-# Pentru imagini pentru care exista adnotari (cele din setul de date  CMU+MIT)
-# folositi functia show_detection_with_ground_truth,
-# pentru imagini fara adnotari (cele realizate la curs si laborator)
-# folositi functia show_detection_without_ground_truth
-if params.has_annotations:
-    facial_detector.eval_detections(detections, scores, file_names)
-    show_detections_with_ground_truth(detections, scores, file_names, params)#functia asta nu mai exista, am comentat-o, era in scriptul "Visualise"
+# Pasul 4. Ruleaza detectorul facial pe imaginile de test(care pot fi din fisier sau luate in timp real de la webcam)
+if params.real_time_frames==False:
+    detections, scores, file_names = facial_detector.run()
+    # Pasul 5. Evalueaza si vizualizeaza detectiile
+    # Pentru imagini pentru care exista adnotari (cele din setul de date  CMU+MIT)
+    # folositi functia show_detection_with_ground_truth,
+    # pentru imagini fara adnotari (cele realizate la curs si laborator)
+    # folositi functia show_detection_without_ground_truth
+    if params.has_annotations:
+        facial_detector.eval_detections(detections, scores, file_names)
+        show_detections_with_ground_truth(detections, scores, file_names,
+                                          params)  # functia asta nu mai exista, am comentat-o, era in scriptul "Visualise"
+    else:
+        show_detections_without_ground_truth(detections, scores, file_names, params)
 else:
-    show_detections_without_ground_truth(detections, scores, file_names, params)
+    video = cv.VideoCapture(0)  # poate pun si 1 dupa ce conectez mobilul
+    a = 0
+    start_point, end_point, color, thickness = 0, 0, 0, 0
+    lista_params = [0, 0, 0, 0]
+    lista_params[0] = start_point
+    lista_params[1] = end_point
+    lista_params[2] = color
+    lista_params[3] = thickness
+    tmort = True
+    prima_data = True
+    y1 = -1
+    while True:
+        print("a = ", a)
+        a = a + 1
+        # 3
+        check, frame = video.read()
+
+        # 6. grayscale
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        frame_nemicsorat = gray.copy()
+
+        # 4
+        # start_point = (100, 300)
+        # end_point = (150, 350)
+        # color = (0, 0, 255)
+        # thickness = 2
+
+        # Using cv2.rectangle() method
+        # Draw a rectangle with blue line borders of thickness of 2 px
+        # if int(a / 100) % 2 == 0:
+        #    frame = cv.rectangle(frame, start_point, end_point, color, thickness)
+
+        # t = threading.Thread(target=FunctieDeTestPentruImagini(frame))
+        # t.daemon = True  # set thread to daemon ('ok' won't be printed in this case)
+        # t.start()
+        '''t = executor.submit(FunctieDeTestPentruImagini, frame)'''
+        if tmort == True:
+            t1 = threading.Thread(target=facial_detector.run, args=(False, gray, lista_params))
+            #t1 = threading.Thread(target=FunctieDeTestPentruImagini, args=(frame, lista_params))
+            t1.start()
+            tmort = False
+        if prima_data == False and t1.is_alive() == False:
+            detections = lista_params[0]
+            scores = lista_params[1]
+            print("dupa apel: ", start_point, end_point, color, thickness)
+            tmort = True
+
+            # FunctieDeTestPentruImagini(frame)
+            print("acum pun dreptunghiul. Sa fiu atent la detalii")
+            print("shape detections = ", detections.shape)
+            if detections.shape[0] > 0:
+                detection = detections[0]
+
+                detected_image = frame_nemicsorat[detection[1]:detection[3], detection[0]:detection[2]]
+                x1 = int(detection[1] * params.raport_redim)
+                x2 = int(detection[3] * params.raport_redim)
+                y1 = int(detection[0] * params.raport_redim)
+                y2 = int(detection[2] * params.raport_redim)
+            else:
+                y1 = -1
+        #original_detected_image = imagine_originala[detection[1]:detection[3], detection[0]:detection[2]]
+
+        #linie importanta: cv.imwrite(params.dir_extracted_detections + "/pentruExtrasCulori" + short_file_name + ".jpeg", detected_image)
+
+        # cv.rectangle(image, (detection[0], detection[1]), (detection[2], detection[3]), (0, 0, 255), thickness=1)
+        if y1>-1:
+           cv.rectangle(frame_nemicsorat, (y1, x1), (y2, x2), (0, 0, 255), thickness=1)
+
+
+
+        #if start_point != 0:
+        #    frame = cv.rectangle(frame, start_point, end_point, color, thickness)
+
+        cv.imshow("Captura", frame_nemicsorat)
+
+        # 5
+
+        # 7. For playing
+        key = cv.waitKey(1)
+        if key == ord('q'):
+            r = 8 / 0
+            break
+        prima_data = False
+
+    print("a = ", a)
+    # 2
+    video.release()
+
+    cv.destroyAllWindows
+

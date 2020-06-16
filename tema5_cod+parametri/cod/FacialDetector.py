@@ -234,7 +234,7 @@ class FacialDetector:
 
         return sorted_image_detections[is_maximal], sorted_scores[is_maximal]
 
-    def run(self, return_descriptors=False):
+    def run(self, return_descriptors=False, imagine_webcam=None, lista_params=None):
         """
         Aceasta functie returneaza toate detectiile ( = ferestre) pentru toate imaginile din
         self.params.dir_test_examples
@@ -262,28 +262,34 @@ class FacialDetector:
         # w = self.best_model.coef_.T
         # bias = self.best_model.intercept_[0]
         num_test_images = len(test_files)
-       
+
+        if self.params.real_time_frames:#inseamna ca am primit ca parametru o imagine direct de la webcam
+            num_test_images = 1
         for i in range(num_test_images):
             start_time = timeit.default_timer()
             print('Procesam imaginea de testare %d/%d, %s..' % (i, num_test_images, test_files[i]))
-            img = cv.imread(test_files[i], cv.IMREAD_GRAYSCALE)
 
-            '''o redimensionez in caz ca e prea mare, ca sa nu dureze mult testarea'''
-            '''if im[0]>420:
-                raport = img.shape[0] / 420.0
-                new_height = int(img.shape[0] / raport)
-                new_width = int(img.shape[1] / raport)
-                print("\n\nredimensionez imaginea de test ASTFEL INCAT SA O PASTREZ")
-                print("new_hight = ", new_height)
-                print("new_width = ", new_width)
+            if self.params.real_time_frames==False:
+                img = cv.imread(test_files[i], cv.IMREAD_GRAYSCALE)
+            else:
+                img = imagine_webcam#nu mai convertesc la grayscale pentru ca va fi deja convertita
+                img3 = cv.imread(test_files[i], cv.IMREAD_GRAYSCALE)
+                print("type = ", type(img3))
+                print("type mine = ", type(img))
+                img = np.array(img)
+                print("type = ", type(img3))
+                print("type mine = ", type(img))
+                print("shape1 = ", img.shape)
+                print("shape3 = ", img3.shape)
+                print("img = ", img)
+                print("img3 = ", img3)
+                #f = 6/0
 
-                img_de_pastrat = cv.resize(img, (new_width, new_height))
-                print("test_files[i] = ", test_files[i])
-                cv.imwrite("micsorata_" + test_files[i] + ".jpeg", img_de_pastrat)'''
             if img.shape[0] < img.shape[1]:
                 if img.shape[0] > self.params.width_redimensionare:
 
                     raport = img.shape[0] / (1.0*self.params.width_redimensionare)
+                    self.params.raport_redim = raport
                     new_height = int(img.shape[0] / raport)
                     new_width = int(img.shape[1] / raport)
                     print("\n\nredimensionez imaginea de test pentru ca e foarte mare. Noile dimensiuni sunt: ")
@@ -374,6 +380,8 @@ class FacialDetector:
                   % (i, num_test_images, end_time - start_time))
 
         print("\n\n")
+        lista_params[0] = detections
+        lista_params[1] = scores
         return detections, scores, np.array(file_names)
 
     def compute_average_precision(self, rec, prec):
